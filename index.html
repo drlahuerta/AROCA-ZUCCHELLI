@@ -1,0 +1,2266 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Árbol de decisión MCAT/MCAF</title>
+  <style>
+    :root {
+      --bg: #f7f8f5;
+      --ink: #17201c;
+      --muted: #5c6761;
+      --panel: #ffffff;
+      --line: #d9ded8;
+      --soft: #eef4ef;
+      --accent: #23685a;
+      --accent-2: #7a4e2e;
+      --warn: #8b5d00;
+      --danger: #9b2f2f;
+      --blue: #285b86;
+      --shadow: 0 18px 45px rgba(22, 32, 28, .10);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background: var(--bg);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.45;
+    }
+
+    button, input, select {
+      font: inherit;
+    }
+
+    .app-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 286px minmax(0, 1fr);
+    }
+
+    aside {
+      position: sticky;
+      top: 0;
+      align-self: start;
+      min-height: 100vh;
+      padding: 22px 18px;
+      background: #15231f;
+      color: #f8fbf7;
+      border-right: 1px solid rgba(255, 255, 255, .08);
+    }
+
+    .brand {
+      display: grid;
+      gap: 6px;
+      margin-bottom: 24px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 21px;
+      line-height: 1.08;
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 0;
+      color: #c8d4ce;
+      font-size: 13px;
+    }
+
+    nav {
+      display: grid;
+      gap: 6px;
+    }
+
+    .nav-btn {
+      width: 100%;
+      border: 0;
+      padding: 10px 12px;
+      border-radius: 6px;
+      background: transparent;
+      color: #e9f1ed;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-btn .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #78928a;
+      flex: 0 0 auto;
+    }
+
+    .nav-btn.active, .nav-btn:hover {
+      background: rgba(255, 255, 255, .10);
+    }
+
+    .nav-btn.active .dot { background: #8ee0c2; }
+
+    .source-note {
+      margin-top: 28px;
+      padding: 12px;
+      border: 1px solid rgba(255, 255, 255, .14);
+      border-radius: var(--radius);
+      color: #d8e2dd;
+      font-size: 12px;
+    }
+
+    .source-note .mini-reference {
+      display: block;
+      margin-top: 10px;
+      color: #edf7f2;
+      font-weight: 700;
+    }
+
+    main {
+      min-width: 0;
+      padding: 26px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .topbar h2 {
+      margin: 0;
+      font-size: 30px;
+      line-height: 1.05;
+      letter-spacing: 0;
+    }
+
+    .topbar p {
+      max-width: 880px;
+      margin: 8px 0 0;
+      color: var(--muted);
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      border-radius: 6px;
+      padding: 9px 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 38px;
+    }
+
+    .btn.primary {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: white;
+    }
+
+    .view { display: none; }
+    .view.active { display: block; }
+
+    .grid {
+      display: grid;
+      gap: 16px;
+    }
+
+    .grid.two {
+      grid-template-columns: minmax(0, 1fr) minmax(360px, .9fr);
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .panel.flat {
+      box-shadow: none;
+    }
+
+    .panel-header {
+      padding: 16px 18px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .panel-header h3 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .panel-body {
+      padding: 18px;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    fieldset {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin: 0;
+      background: #fcfdfb;
+    }
+
+    legend {
+      font-weight: 720;
+      padding: 0 7px;
+    }
+
+    .hint {
+      margin: 4px 0 12px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 8px;
+    }
+
+    .option {
+      position: relative;
+      display: grid;
+      grid-template-columns: 18px minmax(0, 1fr);
+      gap: 9px;
+      padding: 10px;
+      min-height: 68px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: white;
+      cursor: pointer;
+    }
+
+    .option input {
+      margin-top: 3px;
+    }
+
+    .option strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .option span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .option:has(input:checked) {
+      border-color: var(--accent);
+      background: #eef8f4;
+    }
+
+    .result-card {
+      display: grid;
+      gap: 14px;
+    }
+
+    .result-main {
+      padding: 18px;
+      border-radius: var(--radius);
+      background: #eaf4f0;
+      border: 1px solid #b9d4ca;
+    }
+
+    .result-main .eyebrow {
+      color: var(--accent);
+      font-weight: 800;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+
+    .result-main h3 {
+      margin: 6px 0 8px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+
+    .result-main p { margin: 0; }
+
+    .tag-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #eef0ed;
+      color: #2a332f;
+      font-size: 12px;
+      border: 1px solid var(--line);
+    }
+
+    .tag.strong {
+      background: #e2f3eb;
+      border-color: #a9d6c2;
+      color: #105444;
+      font-weight: 700;
+    }
+
+    .tag.warn {
+      background: #fff5d8;
+      border-color: #e7cc7d;
+      color: #6c4b00;
+    }
+
+    .list {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    .list li { margin: 7px 0; }
+
+    .compact-note {
+      padding: 12px;
+      border-radius: 7px;
+      background: #f5f6f2;
+      border: 1px solid var(--line);
+      color: #39423e;
+      font-size: 13px;
+    }
+
+    .flow {
+      overflow-x: auto;
+      padding: 4px 2px 10px;
+    }
+
+    .article-tree {
+      overflow-x: auto;
+      padding: 8px 0 18px;
+    }
+
+    .tree-canvas {
+      min-width: 980px;
+      display: grid;
+      justify-items: center;
+      gap: 12px;
+    }
+
+    .tree-level {
+      display: flex;
+      justify-content: center;
+      align-items: stretch;
+      gap: 16px;
+      width: 100%;
+    }
+
+    .tree-branch {
+      display: grid;
+      justify-items: center;
+      gap: 10px;
+      padding-top: 10px;
+      position: relative;
+    }
+
+    .tree-branch::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      width: 1px;
+      height: 10px;
+      background: #b9c4bd;
+    }
+
+    .tree-branch-group {
+      display: flex;
+      align-items: start;
+      gap: 14px;
+      position: relative;
+    }
+
+    .tree-branch-group::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: 12%;
+      right: 12%;
+      height: 1px;
+      background: #b9c4bd;
+    }
+
+    .tree-node {
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 7px;
+      padding: 10px;
+      min-width: 156px;
+      max-width: 220px;
+      min-height: 74px;
+      text-align: center;
+      cursor: pointer;
+      box-shadow: 0 8px 22px rgba(22, 32, 28, .07);
+    }
+
+    .tree-node strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .tree-node span {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+      margin-top: 4px;
+    }
+
+    .tree-node:hover,
+    .tree-node.active {
+      border-color: var(--accent);
+      background: #eef8f4;
+    }
+
+    .tree-node.start {
+      background: #15231f;
+      color: white;
+      border-color: #15231f;
+      min-width: 210px;
+    }
+
+    .tree-node.start span { color: #d7e2dd; }
+
+    .tree-node.warn {
+      background: #fff8e7;
+      border-color: #e2c15d;
+    }
+
+    .tree-node.result {
+      background: #eaf4f0;
+      border-color: #9fcabb;
+      font-weight: 760;
+    }
+
+    .tree-node.rt3 {
+      background: #fff0f0;
+      border-color: #e3b3b3;
+    }
+
+    .tree-detail {
+      margin-top: 14px;
+      padding: 14px;
+      border-radius: 7px;
+      border: 1px solid #cddbd4;
+      background: #f8fbf9;
+      min-height: 76px;
+    }
+
+    .tree-detail h4 {
+      margin: 0 0 6px;
+    }
+
+    .tree-detail p {
+      margin: 0;
+      color: #34413b;
+    }
+
+    .flow-row {
+      display: grid;
+      grid-template-columns: 150px minmax(200px, 1fr) minmax(210px, 1fr) minmax(210px, 1fr) minmax(210px, 1fr);
+      gap: 10px;
+      min-width: 980px;
+      margin-bottom: 10px;
+    }
+
+    .node {
+      border: 1px solid var(--line);
+      background: white;
+      border-radius: 7px;
+      padding: 10px;
+      min-height: 74px;
+      position: relative;
+    }
+
+    .node h4 {
+      margin: 0 0 4px;
+      font-size: 14px;
+    }
+
+    .node p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .node.result {
+      border-color: #9fcabb;
+      background: #eef8f4;
+    }
+
+    .node.warn {
+      border-color: #e2c15d;
+      background: #fff7df;
+    }
+
+    .node.rt3 {
+      border-color: #e3b3b3;
+      background: #fff0f0;
+    }
+
+    .table-wrap { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      min-width: 760px;
+      border-collapse: collapse;
+      font-size: 13px;
+      background: white;
+    }
+
+    th, td {
+      border-bottom: 1px solid var(--line);
+      padding: 10px;
+      vertical-align: top;
+      text-align: left;
+    }
+
+    th {
+      background: #edf3ef;
+      color: #26342f;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+
+    .accordion {
+      display: grid;
+      gap: 10px;
+    }
+
+    details {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+
+    summary {
+      cursor: pointer;
+      padding: 13px 15px;
+      font-weight: 760;
+      background: #fbfcfa;
+    }
+
+    details .content {
+      padding: 0 15px 15px;
+      color: #26322d;
+    }
+
+    .definition-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+      gap: 12px;
+    }
+
+    .definition {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 13px;
+      min-height: 116px;
+    }
+
+    .definition h4 {
+      margin: 0 0 6px;
+      font-size: 15px;
+    }
+
+    .definition p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .callout {
+      padding: 14px;
+      border: 1px solid #cddbd4;
+      border-left: 5px solid var(--accent);
+      background: #f4faf7;
+      border-radius: 7px;
+    }
+
+    .callout.warning {
+      border-color: #eadcae;
+      border-left-color: var(--warn);
+      background: #fff9e9;
+    }
+
+    .case-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+
+    .case-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+    }
+
+    .case-card h4 { margin: 0 0 8px; }
+    .case-card p { margin: 0 0 8px; color: var(--muted); }
+
+    .practice-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .flashcard {
+      min-height: 168px;
+    }
+
+    .flashcard summary {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+    }
+
+    .answer {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 7px;
+      background: #eef8f4;
+      border: 1px solid #b9d4ca;
+    }
+
+    .quiz-prompt {
+      font-weight: 760;
+      margin-bottom: 8px;
+    }
+
+    .mcq-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+
+    .mcq-card {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .mcq-card h4 {
+      margin: 0;
+      font-size: 15px;
+    }
+
+    .mcq-options {
+      display: grid;
+      gap: 8px;
+    }
+
+    .mcq-option {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: #fbfcfa;
+      color: var(--ink);
+      padding: 10px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .mcq-option:hover {
+      border-color: #9fcabb;
+      background: #f1f8f5;
+    }
+
+    .mcq-option.correct {
+      border-color: #7ebc9f;
+      background: #e7f7ef;
+    }
+
+    .mcq-option.incorrect {
+      border-color: #e4b0a8;
+      background: #fff0ed;
+    }
+
+    .feedback {
+      min-height: 48px;
+      padding: 10px;
+      border-radius: 7px;
+      background: #f5f6f2;
+      border: 1px solid var(--line);
+      color: #34413b;
+      font-size: 13px;
+    }
+
+    .question-toggle-row {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: center;
+      padding: 4px 0;
+    }
+
+    .more-questions {
+      display: contents;
+    }
+
+    .chat-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 16px;
+      align-items: start;
+    }
+
+    .chat-window {
+      height: min(620px, 70vh);
+      overflow-y: auto;
+      display: grid;
+      align-content: start;
+      gap: 12px;
+      padding: 16px;
+      background: #f9faf7;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .message {
+      max-width: 88%;
+      padding: 12px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: white;
+    }
+
+    .message.user {
+      justify-self: end;
+      background: #eaf4f0;
+      border-color: #b9d4ca;
+    }
+
+    .message.article {
+      justify-self: start;
+    }
+
+    .message strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    .message div {
+      white-space: pre-line;
+    }
+
+    .chat-form {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      padding: 12px;
+      background: white;
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+
+    .chat-form input {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 10px 12px;
+    }
+
+    .source-chip {
+      display: inline-flex;
+      margin-top: 8px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: #eef0ed;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .suggestion-list {
+      display: grid;
+      gap: 8px;
+    }
+
+    .suggestion-list button {
+      justify-content: start;
+      text-align: left;
+    }
+
+    .print-sheet {
+      background: white;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+
+    .metric {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      gap: 10px;
+      align-items: start;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .metric strong {
+      color: var(--accent);
+      font-size: 13px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 900px) {
+      .app-shell { grid-template-columns: 1fr; }
+      aside {
+        position: relative;
+        min-height: auto;
+      }
+      nav {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .grid.two { grid-template-columns: 1fr; }
+      .chat-layout { grid-template-columns: 1fr; }
+      .topbar { display: grid; }
+      .toolbar { justify-content: flex-start; }
+    }
+
+    @media print {
+      aside, .toolbar, .nav-btn, .no-print { display: none !important; }
+      .app-shell { display: block; }
+      main { padding: 0; }
+      .view { display: block; page-break-after: always; }
+      .panel { box-shadow: none; }
+      body { background: white; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside>
+      <div class="brand">
+        <h1>MCAT / MCAF</h1>
+        <p>Herramienta desarrollada por @dr.lahuerta, basada en Aroca, Zucchelli, Di Domenico y de Sanctis, 2025.</p>
+      </div>
+      <nav aria-label="Secciones">
+        <button class="nav-btn active" data-view="wizard"><span class="dot"></span><span>Decidir caso</span></button>
+        <button class="nav-btn" data-view="map"><span class="dot"></span><span>Árbol completo</span></button>
+        <button class="nav-btn" data-view="explain"><span class="dot"></span><span>Artículo simplificado</span></button>
+        <button class="nav-btn" data-view="teach"><span class="dot"></span><span>Modo aprendizaje</span></button>
+        <button class="nav-btn" data-view="ask"><span class="dot"></span><span>Preguntar</span></button>
+        <button class="nav-btn" data-view="glossary"><span class="dot"></span><span>Glosario</span></button>
+      </nav>
+      <div class="source-note">
+        Desarrollada por @dr.lahuerta. Esta herramienta no sustituye juicio clínico ni entrenamiento quirúrgico. Mantiene los umbrales, matices y excepciones descritos por el artículo.
+        <span class="mini-reference">Fuente: Aroca S, Zucchelli G, Di Domenico GL, de Sanctis M. Decision Tree for the Treatment of Multiple Gingival Recession Defects When Utilizing MCAT or MCAF Based on Evidence and Clinical Experience. Int J Periodontics Restorative Dent. 2025;45:601-615. doi:10.11607/prd.7290.</span>
+      </div>
+    </aside>
+
+    <main>
+      <div class="topbar">
+        <div>
+          <h2>Árbol interactivo para recesiones gingivales múltiples</h2>
+          <p>Primero identifica si hay NCCL y tipo RT. Después decide la técnica quirúrgica por tejido queratinizado lateral, dimensiones de papila y fenotipo. El resultado separa dos preguntas: qué técnica usar y cuánto CTG necesitas.</p>
+        </div>
+        <div class="toolbar no-print">
+          <button class="btn" id="resetBtn" title="Borra las selecciones del caso">Reiniciar</button>
+          <button class="btn" id="printBtn" title="Imprime o guarda la herramienta como PDF">Imprimir</button>
+        </div>
+      </div>
+
+      <section class="view active" id="wizard">
+        <div class="grid two">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>1. Datos del caso</h3>
+            </div>
+            <div class="panel-body">
+              <form id="decisionForm" class="form-grid" autocomplete="off">
+                <fieldset>
+                  <legend>NCCL / CEJ</legend>
+                  <p class="hint">Las lesiones cervicales no cariosas no deciden la técnica quirúrgica, pero sí se tratan antes de la cirugía.</p>
+                  <div class="options">
+                    <label class="option">
+                      <input type="radio" name="nccl" value="no">
+                      <span><strong>No hay NCCL relevante</strong><span>La decisión sigue por RT.</span></span>
+                    </label>
+                    <label class="option">
+                      <input type="radio" name="nccl" value="yes">
+                      <span><strong>Hay NCCL o CEJ alterada</strong><span>Reconstruir/restaurar antes de la cirugía mucogingival.</span></span>
+                    </label>
+                  </div>
+                </fieldset>
+
+                <fieldset>
+                  <legend>Tipo de recesión</legend>
+                  <p class="hint">Clasificación EFP/AAP: el primer gran filtro es la pérdida de inserción interproximal.</p>
+                  <div class="options">
+                    <label class="option">
+                      <input type="radio" name="rt" value="rt1">
+                      <span><strong>RT1</strong><span>Sin pérdida de inserción interdental.</span></span>
+                    </label>
+                    <label class="option">
+                      <input type="radio" name="rt" value="rt2">
+                      <span><strong>RT2</strong><span>Pérdida interdental menor que la vestibular.</span></span>
+                    </label>
+                    <label class="option">
+                      <input type="radio" name="rt" value="rt3">
+                      <span><strong>RT3</strong><span>Pérdida interdental mayor que la vestibular.</span></span>
+                    </label>
+                  </div>
+                </fieldset>
+
+                <fieldset data-condition="rt1 rt2">
+                  <legend>LKT</legend>
+                  <p class="hint">LKT es el tejido queratinizado lateral al defecto, entre papila y línea mucogingival/invaginación mucosa o frenillo.</p>
+                  <div class="options">
+                    <label class="option">
+                      <input type="radio" name="lkt" value="large">
+                      <span><strong>LKT &gt; 2 mm</strong><span>Suficiente para considerar papila/PCW.</span></span>
+                    </label>
+                    <label class="option">
+                      <input type="radio" name="lkt" value="limited">
+                      <span><strong>LKT ≤ 2 mm</strong><span>El artículo favorece MCAT.</span></span>
+                    </label>
+                    <label class="option">
+                      <input type="radio" name="lkt" value="borderline">
+                      <span><strong>Exactamente 2 mm / dudoso</strong><span>Zona frontera: revisar medición y contexto.</span></span>
+                    </label>
+                  </div>
+                </fieldset>
+
+                <fieldset data-condition="rt1" id="papillaBaseField">
+                  <legend>Base de papila</legend>
+                  <p class="hint">En RT1 con LKT suficiente, la base de papila decide entre MCAF y MCAT.</p>
+                  <div class="options">
+                    <label class="option">
+                      <input type="radio" name="papillaBase" value="large">
+                      <span><strong>Base ≥ 3 mm</strong><span>Papila amplia: MCAF es la opción principal.</span></span>
+                    </label>
+                    <label class="option">
+                      <input type="radio" name="papillaBase" value="narrow">
+                      <span><strong>Base &lt; 3 mm</strong><span>Papila estrecha: MCAT conserva mejor la vascularización.</span></span>
+                    </label>
+                  </div>
+                </fieldset>
+
+                <fieldset data-condition="rt2" id="pcwField">
+                  <legend>PCW</legend>
+                  <p class="hint">PCW es la anchura coronal de la papila medida a 2 mm de la punta.</p>
+                  <div class="options">
+                    <label class="option">
+                      <input type="radio" name="pcw" value="wide">
+                      <span><strong>PCW ≥ 2 mm</strong><span>Permite deepitelización papilar hacia palatino/lingual.</span></span>
+                    </label>
+                    <label class="option">
+                      <input type="radio" name="pcw" value="limited">
+                      <span><strong>PCW &lt; 2 mm</strong><span>Favorece MCAT+CTG.</span></span>
+                    </label>
+                  </div>
+                </fieldset>
+
+                <fieldset data-condition="rt1" id="phenotypeField">
+                  <legend>Fenotipo para decidir CTG</legend>
+                  <p class="hint">El artículo usa KTW/KT y GT para decidir si el CTG se evita, se usa selectivamente o se usa en todos los sitios.</p>
+                  <div class="options">
+                    <label class="option">
+                      <input type="radio" name="phenotype" value="favorable">
+                      <span><strong>KTW &gt; 2 mm en todos los sitios</strong><span>Si GT es suficiente, no se añade CTG.</span></span>
+                    </label>
+                    <label class="option">
+                      <input type="radio" name="phenotype" value="mixed-thick">
+                      <span><strong>1 &lt; KTW ≤ 2 mm en sitios aislados + GT ≥ 1 mm</strong><span>Distribución no ideal pero fenotipo grueso.</span></span>
+                    </label>
+                    <label class="option">
+                      <input type="radio" name="phenotype" value="mixed-thin">
+                      <span><strong>1 &lt; KTW ≤ 2 mm en sitios aislados + algún GT &lt; 1 mm</strong><span>CTG selectivo en sitios finos.</span></span>
+                    </label>
+                    <label class="option">
+                      <input type="radio" name="phenotype" value="thin-all">
+                      <span><strong>KTW ≤ 1 mm homogéneo</strong><span>Técnica bilaminar con CTG en todos los sitios.</span></span>
+                    </label>
+                  </div>
+                </fieldset>
+              </form>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>2. Resultado razonado</h3>
+            </div>
+            <div class="panel-body result-card">
+              <div class="result-main">
+                <div class="eyebrow">Recomendación del árbol</div>
+                <h3 id="resultTitle">Completa el caso</h3>
+                <p id="resultSummary"></p>
+              </div>
+              <div class="tag-row" id="tagRow"></div>
+              <div>
+                <h4>Acciones previas y técnica</h4>
+                <ul class="list" id="actionList"></ul>
+              </div>
+              <div>
+                <h4>Por qué</h4>
+                <ul class="list" id="whyList"></ul>
+              </div>
+              <div class="compact-note" id="boundaryNote"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="map">
+        <div class="panel">
+          <div class="panel-header">
+            <h3>Árbol completo de tratamiento</h3>
+          </div>
+          <div class="panel-body">
+            <div class="callout">
+              La lectura útil es esta: NCCL se corrige antes; después manda RT. En RT1 decide LKT y base papilar. En RT2 decide LKT y PCW. En RT3 el artículo sale del binomio MCAT/MCAF convencional y propone la técnica de pared con CTG.
+            </div>
+            <div class="article-tree" aria-label="Árbol de decisiones navegable">
+              <div class="tree-canvas">
+                <button class="tree-node start active" data-tree-info="El árbol empieza separando dos cosas: si hay NCCL/CEJ alterada, se restaura antes; después se clasifica la pérdida de inserción interdental como RT1, RT2 o RT3.">
+                  <strong>NCCL</strong><span>¿Hay lesión cervical/CEJ alterada?</span>
+                </button>
+                <div class="tree-branch-group">
+                  <div class="tree-branch">
+                    <button class="tree-node warn" data-tree-info="Si hay NCCL o CEJ perdida, el artículo indica reconstruir/restaurar antes de la cirugía mucogingival. Esto no decide por sí mismo MCAT o MCAF.">
+                      <strong>Sí</strong><span>Restauración / reconstrucción CEJ</span>
+                    </button>
+                  </div>
+                  <div class="tree-branch">
+                    <button class="tree-node" data-tree-info="Si no hay NCCL relevante, se pasa directamente a valorar la pérdida de inserción interdental.">
+                      <strong>No</strong><span>Pasar a CAL / RT</span>
+                    </button>
+                  </div>
+                </div>
+
+                <button class="tree-node" data-tree-info="La pérdida de inserción interdental es el primer filtro clínico. RT1 no tiene pérdida interdental; RT2 tiene pérdida menor que la vestibular; RT3 tiene pérdida mayor que la vestibular.">
+                  <strong>CAL / RT</strong><span>Clasificar RT1, RT2 o RT3</span>
+                </button>
+
+                <div class="tree-branch-group">
+                  <div class="tree-branch">
+                    <button class="tree-node" data-tree-info="RT1 significa recesión sin pérdida de inserción interdental. La siguiente decisión es medir LKT.">
+                      <strong>RT1</strong><span>Sin pérdida interdental</span>
+                    </button>
+                    <button class="tree-node" data-tree-info="En RT1, LKT > 2 mm permite valorar la base de la papila; LKT ≤ 2 mm favorece MCAT.">
+                      <strong>LKT</strong><span>&gt; 2 mm o ≤ 2 mm</span>
+                    </button>
+                    <div class="tree-branch-group">
+                      <div class="tree-branch">
+                        <button class="tree-node" data-tree-info="Con LKT > 2 mm, se mide la base papilar. Si es ≥ 3 mm, la papila es suficientemente amplia para MCAF.">
+                          <strong>&gt; 2 mm</strong><span>Medir base papilar</span>
+                        </button>
+                        <div class="tree-branch-group">
+                          <div class="tree-branch">
+                            <button class="tree-node result" data-tree-info="Base papilar ≥ 3 mm: MCAF es la opción principal. El CTG se decide después según KTW/GT.">
+                              <strong>Base ≥ 3 mm</strong><span>MCAF ± CTG</span>
+                            </button>
+                          </div>
+                          <div class="tree-branch">
+                            <button class="tree-node result" data-tree-info="Base papilar < 3 mm: MCAT es preferible porque conserva mejor la vascularización de una papila estrecha. El CTG se decide según fenotipo.">
+                              <strong>Base &lt; 3 mm</strong><span>MCAT ± CTG</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="tree-branch">
+                        <button class="tree-node result" data-tree-info="LKT ≤ 2 mm en RT1: el artículo favorece MCAT. El uso de CTG depende de KTW/GT.">
+                          <strong>≤ 2 mm</strong><span>MCAT ± CTG</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="tree-branch">
+                    <button class="tree-node" data-tree-info="RT2 implica pérdida interdental menor que la vestibular. Primero se mide LKT.">
+                      <strong>RT2</strong><span>Pérdida interdental parcial</span>
+                    </button>
+                    <button class="tree-node" data-tree-info="En RT2, LKT ≤ 2 mm conduce a MCAT+CTG. Si LKT es > 2 mm, se evalúa PCW.">
+                      <strong>LKT</strong><span>&gt; 2 mm o ≤ 2 mm</span>
+                    </button>
+                    <div class="tree-branch-group">
+                      <div class="tree-branch">
+                        <button class="tree-node result" data-tree-info="RT2 con LKT ≤ 2 mm: MCAT+CTG. El CTG sostiene margen gingival y papila posquirúrgica.">
+                          <strong>≤ 2 mm</strong><span>MCAT+CTG</span>
+                        </button>
+                      </div>
+                      <div class="tree-branch">
+                        <button class="tree-node" data-tree-info="RT2 con LKT > 2 mm: se mide PCW, anchura coronal de la papila a 2 mm de la punta.">
+                          <strong>&gt; 2 mm</strong><span>Medir PCW</span>
+                        </button>
+                        <div class="tree-branch-group">
+                          <div class="tree-branch">
+                            <button class="tree-node result" data-tree-info="PCW ≥ 2 mm: MCAF+CTG puede considerarse porque hay anchura papilar suficiente para el manejo del colgajo.">
+                              <strong>PCW ≥ 2 mm</strong><span>MCAF+CTG</span>
+                            </button>
+                          </div>
+                          <div class="tree-branch">
+                            <button class="tree-node result" data-tree-info="PCW < 2 mm: MCAT+CTG. La papila coronal estrecha hace menos favorable MCAF.">
+                              <strong>PCW &lt; 2 mm</strong><span>MCAT+CTG</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="tree-branch">
+                    <button class="tree-node rt3" data-tree-info="RT3 implica pérdida interdental mayor que la vestibular. La cobertura completa es difícil y el artículo propone una rama distinta.">
+                      <strong>RT3</strong><span>Pérdida interdental extensa</span>
+                    </button>
+                    <button class="tree-node rt3 result" data-tree-info="RT3: técnica de pared con CTG bajo CAF y material regenerativo para intentar mejorar cobertura radicular y nivel de inserción clínica.">
+                      <strong>CTG wall</strong><span>Técnica de pared + regeneración</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+              <div class="tree-detail" id="treeDetail">
+                <h4>NCCL</h4>
+                <p>El árbol empieza separando dos cosas: si hay NCCL/CEJ alterada, se restaura antes; después se clasifica la pérdida de inserción interdental como RT1, RT2 o RT3.</p>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Rama</th>
+                    <th>Condición</th>
+                    <th>Resultado</th>
+                    <th>Matiz que no conviene olvidar</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>RT1</td>
+                    <td>LKT &gt; 2 mm + base papilar ≥ 3 mm</td>
+                    <td>MCAF; CTG según fenotipo</td>
+                    <td>Si KTW &gt; 2 mm en todos los sitios: MCAF sin CTG. Si hay sitios finos: CTG selectivo. Si KTW ≤ 1 mm homogéneo: MCAF+CTG.</td>
+                  </tr>
+                  <tr>
+                    <td>RT1</td>
+                    <td>LKT &gt; 2 mm + base papilar &lt; 3 mm</td>
+                    <td>MCAT; CTG según fenotipo</td>
+                    <td>La papila estrecha penaliza MCAF por menor lecho receptor y más riesgo vascular.</td>
+                  </tr>
+                  <tr>
+                    <td>RT1</td>
+                    <td>LKT ≤ 2 mm</td>
+                    <td>MCAT; CTG según fenotipo</td>
+                    <td>La falta de LKT hace más razonable el túnel que elevar papilas quirúrgicas.</td>
+                  </tr>
+                  <tr>
+                    <td>RT2</td>
+                    <td>LKT ≤ 2 mm</td>
+                    <td>MCAT+CTG</td>
+                    <td>DCP y dimensiones papilares condicionan la posibilidad de cobertura completa.</td>
+                  </tr>
+                  <tr>
+                    <td>RT2</td>
+                    <td>LKT &gt; 2 mm + PCW ≥ 2 mm</td>
+                    <td>MCAF+CTG</td>
+                    <td>El CTG se considera necesario en RT2; la figura clínica muestra uso sitio-específico según KTW/GT.</td>
+                  </tr>
+                  <tr>
+                    <td>RT2</td>
+                    <td>LKT &gt; 2 mm + PCW &lt; 2 mm</td>
+                    <td>MCAT+CTG</td>
+                    <td>PCW limitada hace menos favorable la deepitelización y estabilización papilar con MCAF.</td>
+                  </tr>
+                  <tr>
+                    <td>RT3</td>
+                    <td>Pérdida interproximal extensa</td>
+                    <td>Técnica de pared con CTG</td>
+                    <td>CTG bajo CAF como pared de tejido blando para el defecto intraóseo + material regenerativo.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="explain">
+        <div class="accordion">
+          <details open>
+            <summary>Idea central del artículo</summary>
+            <div class="content">
+              <p>El artículo intenta ordenar una decisión que suele hacerse por experiencia: cuando hay recesiones gingivales múltiples, elegir entre MCAF y MCAT no depende de una técnica "mejor" en abstracto. Depende de la anatomía local: tipo RT, tejido queratinizado lateral, tamaño de papilas y fenotipo gingival. La literatura comparativa directa no demuestra superioridad clara de MCAF o MCAT; por eso los autores proponen un árbol clínico.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Paso 0: NCCL y CEJ</summary>
+            <div class="content">
+              <p>Las NCCL pueden borrar la CEJ o crear escalones/concavidades. Si existe NCCL, se debe planificar la restauración antes de la cirugía mucogingival. Si la CEJ no se ve, se estima su posición con el diente contralateral intacto cuando sea posible, o con el método de la "papila ideal". En recesiones múltiples, de Sanctis propone reconstruir la CEJ 1 mm apical a la línea de cobertura radicular prevista. El punto clave: NCCL obliga a restaurar, pero no decide por sí misma la técnica quirúrgica.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Paso 1: RT1, RT2 o RT3</summary>
+            <div class="content">
+              <p>RT1 significa que no hay pérdida de inserción interdental. RT2 significa que hay pérdida interdental, pero menor que la pérdida vestibular. RT3 significa que la pérdida interdental es mayor que la vestibular. Este paso es el principal porque el nivel interdental predice la posibilidad de cobertura radicular completa. RT2 y RT3 tienen peor pronóstico que RT1.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Paso 2: LKT</summary>
+            <div class="content">
+              <p>LKT es el tejido queratinizado lateral al defecto. Se mide con sonda como la altura de tejido queratinizado entre la papila y la línea mucogingival, o la invaginación mucosa/frenillo. Si hay mucho LKT, elevar papilas quirúrgicas para MCAF es más fácil y hay menos riesgo de desgarros/perforaciones. Si el LKT es limitado, MCAT se vuelve preferente porque evita ese tipo de disección abierta.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Paso 3: papila</summary>
+            <div class="content">
+              <p>En RT1 con LKT &gt; 2 mm se mira la base papilar. Si la base es ≥ 3 mm, MCAF es la opción de elección. Si la base es &lt; 3 mm, MCAT es preferible. En RT2 con LKT suficiente se mira PCW: si PCW ≥ 2 mm, MCAF+CTG puede considerarse; si PCW &lt; 2 mm, MCAT+CTG. La razón es vascular y mecánica: MCAF necesita una papila suficientemente amplia para deepitelizar, recibir el colgajo y estabilizarlo sin comprometer demasiado el aporte sanguíneo. MCAT, al no seccionar la papila, preserva mejor esa vascularización en papilas estrechas.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Paso 4: fenotipo y CTG</summary>
+            <div class="content">
+              <p>El fenotipo combina KTW/KT y GT. Un tejido fino se define por GT ≤ 1 mm; un tejido grueso por GT &gt; 1 mm. Para evitar CTG, el artículo acepta un fenotipo suficiente, especialmente KTW &gt; 2 mm en todos los sitios y GT adecuada. Si hay sitios aislados con 1 &lt; KTW ≤ 2 mm, se evalúa GT: si todos son gruesos, se puede evitar CTG; si hay sitios finos, se usa CTG solo en esos sitios. Si el KTW es ≤ 1 mm de forma homogénea, se indica técnica bilaminar con CTG en todos los sitios. En RT2 los autores dicen que el CTG es necesario porque también ayuda a sostener la papila posquirúrgica.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Qué dice la evidencia que citan</summary>
+            <div class="content">
+              <p>CAF+CTG sigue siendo el patrón de referencia para recubrimiento radicular, pero en recesiones múltiples la anatomía pesa más. En RT2, un ICAL &lt; 3 mm se asoció con una probabilidad de cobertura completa &gt; 80% en un estudio de CAF+CTG. En estudios de Aroca con MCAT para clases III, DCP fue importante: con DCP basal de 3 mm, la probabilidad de cobertura completa fue 0,89 en maxilar y 0,34 en mandíbula. Para cobertura ≥ 75%, las probabilidades estimadas en maxilar fueron 0,99, 0,98 y 0,92 con DCP de 0,0, 0,2 y 4 mm; en mandíbula 0,82, 0,63 y 0,40. Otros estudios relacionan altura/anchura papilar con cobertura, pero no hay consenso absoluto.</p>
+              <p>Sobre fenotipo: más KT basal se relaciona con mejor reducción de recesión; cada milímetro adicional de KT basal se asoció con 0,23 mm más de reducción a 8 años. En CAF, un grosor de colgajo &gt; 0,8 mm se asoció con 100% de cobertura en una serie. En MCAF para múltiples defectos, MCAF+CTG fue mejor que MCAF sola en encía fina, pero no en encía gruesa; MCAF sola dio mejores resultados estéticos en sitios gruesos, mientras CTG aumentó KTW y morbilidad. Por eso los autores recomiendan no usar CTG si no hace falta, y preferirlo selectivamente cuando el fenotipo sea fino.</p>
+            </div>
+          </details>
+          <details>
+            <summary>MCAF, explicado sin jerga innecesaria</summary>
+            <div class="content">
+              <p>MCAF es un colgajo avanzado coronal múltiple. Es la primera opción cuando hay suficiente tejido queratinizado apical/lateral y papilas amplias. Se diseñan incisiones submarginales oblicuas, se desplazan papilas quirúrgicas, se levanta un colgajo split-full-split, se deepitelizan papilas anatómicas y se coloca el margen del colgajo 1 mm coronal a la CEJ. Se puede hacer sin CTG, con CTG selectivo o con CTG completo. Sus ventajas principales son estética y menor morbilidad cuando el fenotipo ya es favorable.</p>
+            </div>
+          </details>
+          <details>
+            <summary>MCAT, explicado sin jerga innecesaria</summary>
+            <div class="content">
+              <p>MCAT es un túnel avanzado coronal modificado. Entra por el surco con microelevadores, despega mucoperiostio sin incisión inicial en la encía marginal adherida, extiende la preparación más allá de la línea mucogingival y bajo las papilas, y libera tensión desde la cara interna del colgajo. El CTG, si se usa, se introduce por la recesión más amplia y se estabiliza con suturas. La posición coronal se mantiene con suturas suspendidas durante 10 a 14 días. Es especialmente útil cuando la papila es estrecha o el LKT es limitado.</p>
+            </div>
+          </details>
+          <details>
+            <summary>RT3 y técnica de pared con CTG</summary>
+            <div class="content">
+              <p>En RT3 hay pérdida interproximal extensa, por lo que la cobertura completa es muy difícil. El artículo menciona pocos casos exitosos y destaca una aproximación reciente: colocar un CTG bajo CAF como "pared" de tejido blando bucal/lingual para el defecto intraóseo y combinarlo con material regenerativo. La intención es mejorar a la vez la cobertura radicular y el nivel de inserción clínica.</p>
+            </div>
+          </details>
+          <details>
+            <summary>Factores que el artículo no usa para decidir MCAF vs MCAT</summary>
+            <div class="content">
+              <p>Dimensiones de la recesión, localización maxilar o mandibular, número de defectos, frenillos o tracción muscular, profundidad vestibular y posición dental no son determinantes del diseño de la técnica quirúrgica en este árbol. Los autores dicen que esos factores pueden manejarse con cualquiera de los dos abordajes, aunque siguen siendo relevantes para la ejecución quirúrgica y el pronóstico.</p>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <section class="view" id="teach">
+        <div class="grid">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Modo aprendizaje</h3>
+            </div>
+            <div class="panel-body">
+              <div class="print-sheet">
+                <p><strong>Idea guía:</strong> "No elegimos MCAT o MCAF por preferencia técnica; elegimos según qué estructura anatómica nos dará estabilidad y vascularización: inserción interdental, LKT, papila y fenotipo."</p>
+                <div class="metric"><strong>1</strong><span>Si hay NCCL o CEJ perdida, primero reconstruye/restaura. Esto prepara el límite coronario, pero no decide la técnica quirúrgica.</span></div>
+                <div class="metric"><strong>2</strong><span>Clasifica RT. RT1 permite buscar cobertura completa con mejor pronóstico. RT2 exige pensar en pérdida interdental y suele necesitar CTG. RT3 exige un enfoque de pared con CTG/regeneración.</span></div>
+                <div class="metric"><strong>3</strong><span>Mide LKT. Si es limitado, MCAT gana peso. Si es amplio, mira la papila.</span></div>
+                <div class="metric"><strong>4</strong><span>En RT1, base papilar ≥ 3 mm favorece MCAF; base &lt; 3 mm favorece MCAT.</span></div>
+                <div class="metric"><strong>5</strong><span>En RT2, PCW ≥ 2 mm permite considerar MCAF+CTG; PCW &lt; 2 mm lleva a MCAT+CTG.</span></div>
+                <div class="metric"><strong>6</strong><span>Decide CTG con fenotipo: tejido suficiente, no CTG; zonas finas, CTG selectivo; fenotipo fino homogéneo, CTG completo.</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Flashcards</h3>
+            </div>
+            <div class="panel-body">
+              <div class="practice-grid">
+                <details class="flashcard">
+                  <summary>Si hay una NCCL o la CEJ no se identifica bien, ¿qué paso va antes de elegir la cirugía?</summary>
+                  <div class="content answer">Planificar restauración/reconstrucción de CEJ. La lesión cervical prepara el caso, pero no decide por sí misma la técnica quirúrgica.</div>
+                </details>
+                <details class="flashcard">
+                  <summary>En RT1 con LKT &gt; 2 mm y base papilar ≥ 3 mm, ¿cuál es la primera opción?</summary>
+                  <div class="content answer">MCAF. Después se decide si hace falta CTG según KTW/GT: sin CTG, CTG selectivo o CTG en todos los sitios.</div>
+                </details>
+                <details class="flashcard">
+                  <summary>En RT1 con papila estrecha, ¿qué problema intenta evitar MCAT?</summary>
+                  <div class="content answer">Porque la papila estrecha ofrece menos lecho receptor y más riesgo vascular si se usa MCAF. MCAT conserva mejor la papila.</div>
+                </details>
+                <details class="flashcard">
+                  <summary>En RT2, ¿qué combinación permite considerar MCAF+CTG?</summary>
+                  <div class="content answer">Cuando LKT es &gt; 2 mm y PCW es ≥ 2 mm. El CTG se mantiene porque hay pérdida interdental y debe sostener margen y papila.</div>
+                </details>
+                <details class="flashcard">
+                  <summary>En RT3, ¿por qué ya no es una elección simple entre MCAT y MCAF?</summary>
+                  <div class="content answer">La cobertura completa es mucho menos predecible. El artículo propone técnica de pared con CTG bajo CAF y material regenerativo.</div>
+                </details>
+                <details class="flashcard">
+                  <summary>¿Cuándo tiene sentido usar CTG solo en algunos sitios?</summary>
+                  <div class="content answer">Cuando el fenotipo no es homogéneo y solo algunos sitios presentan tejido fino o KTW insuficiente. La idea es mejorar estabilidad con menos morbilidad.</div>
+                </details>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Banco de preguntas</h3>
+            </div>
+            <div class="panel-body">
+              <div class="mcq-grid">
+                <div class="mcq-card" data-learn="NCCL prepara el caso restaurador, pero la técnica se decide después por RT, LKT, papila y fenotipo.">
+                  <h4>1. Hay NCCL y CEJ alterada. ¿Cuál es la idea correcta?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="false">La NCCL indica directamente MCAT.</button>
+                    <button class="mcq-option" data-correct="true">Se restaura/reconstruye antes, pero no decide la técnica quirúrgica.</button>
+                    <button class="mcq-option" data-correct="false">La NCCL obliga siempre a MCAF+CTG.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="En RT1, si hay LKT suficiente y papila amplia, MCAF es favorable; si además el fenotipo es adecuado, se puede evitar CTG.">
+                  <h4>2. RT1, LKT &gt; 2 mm, base papilar ≥ 3 mm y KTW &gt; 2 mm. ¿Qué escogerías?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="true">MCAF sin CTG.</button>
+                    <button class="mcq-option" data-correct="false">MCAT+CTG en todos los sitios.</button>
+                    <button class="mcq-option" data-correct="false">Técnica de pared con CTG.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="La base papilar estrecha desplaza la decisión hacia MCAT; el GT fino añade CTG solo donde hace falta.">
+                  <h4>3. RT1, LKT &gt; 2 mm, base papilar &lt; 3 mm y algún GT &lt; 1 mm. ¿Qué regla aplicas?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="false">MCAF sin CTG, porque LKT es suficiente.</button>
+                    <button class="mcq-option" data-correct="true">MCAT + CTG selectivo.</button>
+                    <button class="mcq-option" data-correct="false">MCAF+CTG en todos los sitios.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="En RT2, una PCW suficiente permite considerar MCAF, pero el CTG sigue siendo importante por la pérdida interdental.">
+                  <h4>4. RT2 con LKT &gt; 2 mm y PCW ≥ 2 mm. ¿Cuál es la salida del árbol?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="false">MCAF sin CTG.</button>
+                    <button class="mcq-option" data-correct="true">MCAF+CTG como alternativa.</button>
+                    <button class="mcq-option" data-correct="false">No se puede tratar.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="En RT2 con LKT limitado, el túnel gana sentido y el CTG ayuda al soporte del margen y de la papila.">
+                  <h4>5. RT2 con LKT ≤ 2 mm. ¿Qué conviene recordar?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="true">MCAT+CTG; el CTG ayuda a sostener margen y papila.</button>
+                    <button class="mcq-option" data-correct="false">MCAF sin CTG si el paciente prioriza estética.</button>
+                    <button class="mcq-option" data-correct="false">Solo restauración cervical, sin cirugía mucogingival.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="RT3 no se resuelve como una rama convencional MCAT/MCAF: la pérdida interproximal extensa reduce mucho la predictibilidad de cobertura completa.">
+                  <h4>6. RT3 con pérdida interproximal extensa. ¿Qué cambia en el razonamiento?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="false">Se elige MCAT si la papila es estrecha y se termina el árbol.</button>
+                    <button class="mcq-option" data-correct="false">Se elige MCAF si hay LKT suficiente y se evita CTG.</button>
+                    <button class="mcq-option" data-correct="true">Se piensa en técnica de pared con CTG y regeneración.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="question-toggle-row">
+                  <button class="btn" id="moreQuestionsBtn" type="button" aria-expanded="false" aria-controls="moreQuestions">Desglosar más preguntas</button>
+                </div>
+                <div class="more-questions hidden" id="moreQuestions">
+                <div class="mcq-card" data-learn="El primer filtro del artículo es la pérdida de inserción interdental, porque condiciona la predictibilidad de cobertura radicular completa.">
+                  <h4>7. Antes de mirar LKT o papila, ¿qué dato debe clasificarse?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="true">El tipo RT según pérdida de inserción interdental.</button>
+                    <button class="mcq-option" data-correct="false">La profundidad vestibular.</button>
+                    <button class="mcq-option" data-correct="false">El número exacto de recesiones.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="RT1 implica ausencia de pérdida interdental; por eso tiene mejor pronóstico que RT2 y RT3 para cobertura completa.">
+                  <h4>8. ¿Qué significa RT1?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="false">Pérdida interdental mayor que vestibular.</button>
+                    <button class="mcq-option" data-correct="true">Recesión sin pérdida de inserción interdental.</button>
+                    <button class="mcq-option" data-correct="false">Recesión con NCCL obligatoria.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="RT2 tiene pérdida interdental, pero menor que la vestibular; por eso conserva potencial de cobertura, aunque con peor pronóstico que RT1.">
+                  <h4>9. ¿Qué define RT2?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="true">Pérdida interdental menor que la pérdida vestibular.</button>
+                    <button class="mcq-option" data-correct="false">Ausencia completa de pérdida interdental.</button>
+                    <button class="mcq-option" data-correct="false">Pérdida interdental mayor que la vestibular.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="RT3 se define por pérdida interdental mayor que la vestibular; el artículo lo separa por su baja predictibilidad de cobertura completa.">
+                  <h4>10. ¿Qué define RT3?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="false">Pérdida interdental menor que vestibular.</button>
+                    <button class="mcq-option" data-correct="true">Pérdida interdental mayor que vestibular.</button>
+                    <button class="mcq-option" data-correct="false">Fenotipo gingival fino sin pérdida interdental.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="El LKT es tejido queratinizado lateral al defecto; si es limitado, el artículo favorece MCAT porque reduce el riesgo al manejar papilas y tejidos estrechos.">
+                  <h4>11. ¿Por qué importa el LKT?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="false">Porque decide si hay que restaurar la CEJ.</button>
+                    <button class="mcq-option" data-correct="true">Porque orienta si es más favorable MCAF o MCAT.</button>
+                    <button class="mcq-option" data-correct="false">Porque sustituye la clasificación RT.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="En RT1, una base papilar amplia permite mejor lecho receptor y estabilidad para MCAF. El umbral usado es 3 mm.">
+                  <h4>12. En RT1 con LKT suficiente, ¿qué umbral de base papilar favorece MCAF?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="false">≥ 1 mm.</button>
+                    <button class="mcq-option" data-correct="true">≥ 3 mm.</button>
+                    <button class="mcq-option" data-correct="false">≥ 5 mm.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="En RT2 con LKT suficiente, el artículo usa PCW: si es ≥ 2 mm, MCAF+CTG puede considerarse; si es menor, MCAT+CTG.">
+                  <h4>13. En RT2 con LKT &gt; 2 mm, ¿qué medida decide entre MCAF+CTG y MCAT+CTG?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="true">PCW.</button>
+                    <button class="mcq-option" data-correct="false">Profundidad vestibular.</button>
+                    <button class="mcq-option" data-correct="false">Color de la encía.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="PCW se mide 2 mm desde la punta de la papila; el umbral clínico usado en RT2 es 2 mm.">
+                  <h4>14. ¿Cómo se interpreta PCW ≥ 2 mm en RT2?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="true">Hay suficiente anchura coronal papilar para considerar MCAF+CTG.</button>
+                    <button class="mcq-option" data-correct="false">El CTG deja de ser necesario.</button>
+                    <button class="mcq-option" data-correct="false">El caso pasa a RT1.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="GT fino se define como ≤ 1 mm; si el tejido es fino, el CTG ayuda a modificar el fenotipo y mejorar estabilidad.">
+                  <h4>15. ¿Qué grosor gingival se considera fino en el artículo?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="false">&gt; 2 mm.</button>
+                    <button class="mcq-option" data-correct="true">≤ 1 mm.</button>
+                    <button class="mcq-option" data-correct="false">Siempre que haya NCCL.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="Cuando KTW es > 2 mm en todos los sitios y el fenotipo es suficiente, el artículo favorece evitar CTG para reducir morbilidad y preservar estética.">
+                  <h4>16. RT1 con fenotipo favorable: ¿qué principio aplica sobre CTG?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="true">Evitar CTG si no hace falta.</button>
+                    <button class="mcq-option" data-correct="false">Usar CTG siempre en todos los dientes.</button>
+                    <button class="mcq-option" data-correct="false">Sustituir la cirugía por restauración.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="El CTG selectivo se usa para mejorar zonas finas sin aumentar innecesariamente el tamaño de la zona donante ni la morbilidad.">
+                  <h4>17. ¿Cuál es la lógica del CTG selectivo?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="false">Colocar injerto en todos los sitios por rutina.</button>
+                    <button class="mcq-option" data-correct="true">Injertar solo donde el fenotipo lo necesita.</button>
+                    <button class="mcq-option" data-correct="false">Evitar medir KTW y GT.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="El artículo destaca que MCAF+CTG mejora estabilidad en encía fina, pero puede aumentar morbilidad y afectar la estética si se usa sin necesidad.">
+                  <h4>18. ¿Qué inconveniente puede tener añadir CTG cuando no es necesario?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="false">Hace imposible la cobertura radicular.</button>
+                    <button class="mcq-option" data-correct="true">Aumenta morbilidad y puede empeorar la estética.</button>
+                    <button class="mcq-option" data-correct="false">Elimina el tejido queratinizado.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="DCP es la distancia entre la punta de la papila y el punto de contacto; en recesiones con pérdida interdental ayuda a anticipar cobertura completa.">
+                  <h4>19. ¿Para qué sirve registrar DCP?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="true">Para estimar mejor el pronóstico de cobertura completa.</button>
+                    <button class="mcq-option" data-correct="false">Para decidir si hay NCCL.</button>
+                    <button class="mcq-option" data-correct="false">Para medir GT.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="El artículo cita que, con DCP basal de 3 mm en estudios de MCAT para clases III, la probabilidad de cobertura completa fue mayor en maxilar que en mandíbula.">
+                  <h4>20. Con DCP basal de 3 mm, ¿qué zona tuvo mejor probabilidad de cobertura completa en los datos citados?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="true">Maxilar.</button>
+                    <button class="mcq-option" data-correct="false">Mandíbula.</button>
+                    <button class="mcq-option" data-correct="false">No hubo diferencia.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="El artículo menciona que ICAL < 3 mm en RT2 tratado con CAF+CTG se asoció con probabilidad de cobertura completa > 80%.">
+                  <h4>21. En RT2, ¿qué dato citado se asoció con mejor probabilidad de cobertura completa?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="false">ICAL &gt; 6 mm.</button>
+                    <button class="mcq-option" data-correct="true">ICAL &lt; 3 mm.</button>
+                    <button class="mcq-option" data-correct="false">KTW siempre igual a 0 mm.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="El artículo afirma que profundidad/anchura de recesión, sitio, número de defectos, frenillos, profundidad vestibular y posición dental no son determinantes principales de MCAF vs MCAT en este árbol.">
+                  <h4>22. ¿Cuál de estos NO es un determinante principal de MCAF vs MCAT en el árbol?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="false">Tipo RT.</button>
+                    <button class="mcq-option" data-correct="false">LKT.</button>
+                    <button class="mcq-option" data-correct="true">Número de defectos.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="MCAF usa incisiones y desplazamiento de papilas quirúrgicas; por eso necesita papilas suficientemente amplias para mantener estabilidad y vascularización.">
+                  <h4>23. ¿Por qué una papila amplia ayuda en MCAF?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="true">Ofrece mejor lecho receptor y soporte vascular.</button>
+                    <button class="mcq-option" data-correct="false">Evita clasificar RT.</button>
+                    <button class="mcq-option" data-correct="false">Hace innecesaria cualquier sutura.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                <div class="mcq-card" data-learn="MCAT no secciona la papila del mismo modo que MCAF; su preparación tunelizada preserva mejor la vascularización en papilas estrechas.">
+                  <h4>24. ¿Qué ventaja tiene MCAT en papilas estrechas?</h4>
+                  <div class="mcq-options">
+                    <button class="mcq-option" data-correct="false">Siempre evita el uso de CTG.</button>
+                    <button class="mcq-option" data-correct="true">Preserva mejor la papila y su vascularización.</button>
+                    <button class="mcq-option" data-correct="false">Convierte RT2 en RT1.</button>
+                  </div>
+                  <div class="feedback" aria-live="polite">Elige una opción.</div>
+                </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="case-grid">
+            <div class="case-card">
+              <h4>Regla corta 1</h4>
+              <p>RT1 + LKT suficiente + papila amplia.</p>
+              <strong>Piensa:</strong> MCAF, y luego decide CTG con fenotipo.
+            </div>
+            <div class="case-card">
+              <h4>Regla corta 2</h4>
+              <p>RT1 + papila estrecha o LKT limitado.</p>
+              <strong>Piensa:</strong> MCAT, y luego decide CTG con fenotipo.
+            </div>
+            <div class="case-card">
+              <h4>Regla corta 3</h4>
+              <p>RT2 + LKT suficiente + PCW suficiente.</p>
+              <strong>Piensa:</strong> MCAF+CTG como alternativa.
+            </div>
+            <div class="case-card">
+              <h4>Regla corta 4</h4>
+              <p>RT2, LKT ≤ 2 mm o PCW &lt; 2 mm.</p>
+              <strong>Piensa:</strong> MCAT+CTG.
+            </div>
+            <div class="case-card">
+              <h4>Regla corta 5</h4>
+              <p>RT3 con pérdida interproximal extensa.</p>
+              <strong>Piensa:</strong> técnica de pared con CTG + regeneración.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="ask">
+        <div class="chat-layout">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Preguntar al artículo</h3>
+            </div>
+            <div class="chat-window" id="chatWindow" aria-live="polite">
+              <div class="message article">
+                <strong>Artículo</strong>
+                Puedes preguntarme sobre el artículo completo: objetivo, evidencia, clasificación RT, NCCL, fenotipo, técnicas, árbol de decisión, casos clínicos, racional biológico o limitaciones. Responderé solo con información contenida en el artículo proporcionado.
+                <span class="source-chip">Fuente: artículo proporcionado</span>
+              </div>
+            </div>
+            <form class="chat-form" id="articleChatForm">
+              <input id="articleQuestion" type="text" autocomplete="off" placeholder="Preguntar: escribe una duda sobre el artículo">
+              <button class="btn primary" type="submit">Preguntar</button>
+            </form>
+          </div>
+
+          <div class="panel flat">
+            <div class="panel-header">
+              <h3>Ideas para preguntar</h3>
+            </div>
+            <div class="panel-body">
+              <div class="suggestion-list">
+                <button class="btn ask-suggestion" type="button">¿Cuál es el objetivo del artículo?</button>
+                <button class="btn ask-suggestion" type="button">¿Las NCCL deciden la técnica quirúrgica?</button>
+                <button class="btn ask-suggestion" type="button">Explícame RT1, RT2 y RT3.</button>
+                <button class="btn ask-suggestion" type="button">¿Qué dice el artículo sobre fenotipo gingival?</button>
+                <button class="btn ask-suggestion" type="button">¿Cuándo se elige MCAF?</button>
+                <button class="btn ask-suggestion" type="button">¿Cuándo se elige MCAT?</button>
+                <button class="btn ask-suggestion" type="button">¿Qué evidencia compara MCAF con MCAF+CTG?</button>
+                <button class="btn ask-suggestion" type="button">¿Cuándo se usa CTG selectivo?</button>
+                <button class="btn ask-suggestion" type="button">¿Qué papel tiene DCP?</button>
+                <button class="btn ask-suggestion" type="button">¿Qué factores no deciden MCAF vs MCAT?</button>
+              </div>
+              <div class="compact-note" style="margin-top: 14px;">
+                Este chat es deliberadamente cerrado: si la pregunta pide algo que el artículo no desarrolla, responderá que no consta en la fuente.
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view" id="glossary">
+        <div class="grid">
+          <div class="definition-grid">
+            <div class="definition"><h4>RT1</h4><p>Recesión sin pérdida de inserción interproximal. Mejor escenario para cobertura radicular completa.</p></div>
+            <div class="definition"><h4>RT2</h4><p>Recesión con pérdida interproximal menor que la pérdida vestibular. Pronóstico intermedio.</p></div>
+            <div class="definition"><h4>RT3</h4><p>Recesión con pérdida interproximal mayor que la vestibular. Cobertura completa difícil.</p></div>
+            <div class="definition"><h4>MCAF</h4><p>Multiple coronally advanced flap. Colgajo avanzado coronal múltiple con manejo de papilas quirúrgicas.</p></div>
+            <div class="definition"><h4>MCAT</h4><p>Modified coronally advanced tunnel. Túnel avanzado coronal modificado, preserva papilas mediante disección tunelizada.</p></div>
+            <div class="definition"><h4>CTG</h4><p>Injerto de tejido conectivo. Mejora grosor, estabilidad y soporte, pero aumenta morbilidad y puede afectar estética.</p></div>
+            <div class="definition"><h4>LKT</h4><p>Tejido queratinizado lateral al defecto. Umbral operativo del artículo: &gt; 2 mm frente a ≤ 2 mm.</p></div>
+            <div class="definition"><h4>KTW / KT</h4><p>Anchura de tejido queratinizado. Se usa para decidir si el fenotipo permite evitar CTG.</p></div>
+            <div class="definition"><h4>GT</h4><p>Grosor gingival. Fino si ≤ 1 mm; grueso si &gt; 1 mm. Sonda visible: fenotipo fino.</p></div>
+            <div class="definition"><h4>PCW</h4><p>Anchura coronal de la papila medida a 2 mm de la punta. En RT2: ≥ 2 mm favorece MCAF+CTG; &lt; 2 mm favorece MCAT+CTG.</p></div>
+            <div class="definition"><h4>DCP</h4><p>Distancia desde punta de papila al punto de contacto interdental. En RT2/III ayuda a prever cobertura completa, especialmente en MCAT.</p></div>
+            <div class="definition"><h4>NCCL</h4><p>Lesión cervical no cariosa. Requiere restauración/reconstrucción de CEJ antes de la cirugía.</p></div>
+            <div class="definition"><h4>CRC</h4><p>Complete root coverage: cobertura radicular completa.</p></div>
+            <div class="definition"><h4>mRC</h4><p>Mean root coverage: cobertura radicular media.</p></div>
+            <div class="definition"><h4>RecRed</h4><p>Recession reduction: reducción de la recesión.</p></div>
+            <div class="definition"><h4>ICAL</h4><p>Nivel de inserción clínica interproximal. ICAL &lt; 3 mm se asocia a mejor cobertura en RT2.</p></div>
+          </div>
+          <div class="panel flat">
+            <div class="panel-header">
+              <h3>Referencia del artículo</h3>
+            </div>
+            <div class="panel-body">
+              <p>Aroca S, Zucchelli G, Di Domenico GL, de Sanctis M. Decision Tree for the Treatment of Multiple Gingival Recession Defects When Utilizing MCAT or MCAF Based on Evidence and Clinical Experience. <em>International Journal of Periodontics &amp; Restorative Dentistry</em>. 2025;45:601-615. doi: 10.11607/prd.7290.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const form = document.getElementById('decisionForm');
+    const resultTitle = document.getElementById('resultTitle');
+    const resultSummary = document.getElementById('resultSummary');
+    const tagRow = document.getElementById('tagRow');
+    const actionList = document.getElementById('actionList');
+    const whyList = document.getElementById('whyList');
+    const boundaryNote = document.getElementById('boundaryNote');
+
+    function value(name) {
+      const selected = form.querySelector(`input[name="${name}"]:checked`);
+      return selected ? selected.value : '';
+    }
+
+    function phenotypePlan(baseTechnique) {
+      const phenotype = value('phenotype');
+      if (phenotype === 'favorable' || phenotype === 'mixed-thick') {
+        return {
+          title: baseTechnique,
+          ctg: 'Sin CTG',
+          text: `${baseTechnique} sin CTG, porque el fenotipo permite estabilidad sin aumentar morbilidad.`,
+          tags: ['Fenotipo suficiente', 'Evitar CTG si es posible']
+        };
+      }
+      if (phenotype === 'mixed-thin') {
+        return {
+          title: `${baseTechnique} + CTG selectivo`,
+          ctg: 'CTG sitio-específico',
+          text: `${baseTechnique} con CTG solo en los sitios con fenotipo fino o distribución no homogénea.`,
+          tags: ['CTG selectivo', 'Menor zona donante']
+        };
+      }
+      return {
+        title: `${baseTechnique}+CTG`,
+        ctg: 'CTG en todos los sitios',
+        text: `${baseTechnique}+CTG en todos los sitios porque el KTW es fino/homogéneamente insuficiente.`,
+        tags: ['Técnica bilaminar', 'Fenotipo fino']
+      };
+    }
+
+    function addList(el, items) {
+      el.innerHTML = '';
+      items.forEach(item => {
+        const li = document.createElement('li');
+        li.textContent = item;
+        el.appendChild(li);
+      });
+    }
+
+    function renderTags(tags) {
+      tagRow.innerHTML = '';
+      tags.forEach(tag => {
+        const span = document.createElement('span');
+        span.className = `tag ${tag.kind || ''}`;
+        span.textContent = tag.text || tag;
+        tagRow.appendChild(span);
+      });
+    }
+
+    function syncVisibility() {
+      const rt = value('rt');
+      document.querySelectorAll('[data-condition]').forEach(el => {
+        const allowed = el.dataset.condition.split(' ');
+        el.classList.toggle('hidden', !allowed.includes(rt));
+      });
+      const lkt = value('lkt');
+      document.getElementById('papillaBaseField').classList.toggle('hidden', rt !== 'rt1' || lkt !== 'large');
+      document.getElementById('pcwField').classList.toggle('hidden', rt !== 'rt2' || lkt !== 'large');
+    }
+
+    function compute() {
+      syncVisibility();
+      const nccl = value('nccl');
+      const rt = value('rt');
+      const lkt = value('lkt');
+      const tags = [];
+      const actions = [];
+      const why = [];
+      let title = '';
+      let summary = '';
+      let note = '';
+
+      if (!rt) {
+        resultTitle.textContent = 'Completa el caso';
+        resultSummary.textContent = 'Selecciona primero el tipo de recesión. La herramienta no propone una técnica hasta que haya datos clínicos suficientes.';
+        renderTags([{ text: 'Sin opciones preseleccionadas', kind: 'warn' }]);
+        addList(actionList, ['Empieza por RT1, RT2 o RT3. Después se abrirán solo los campos necesarios para esa rama.']);
+        addList(whyList, ['El artículo sitúa la pérdida de inserción interdental como primer paso del proceso de decisión.']);
+        boundaryNote.textContent = 'Ninguna opción queda marcada por defecto al abrir el archivo.';
+        return;
+      }
+
+      if ((rt === 'rt1' || rt === 'rt2') && !lkt) {
+        resultTitle.textContent = 'Falta LKT';
+        resultSummary.textContent = 'Para RT1 o RT2, selecciona el tejido queratinizado lateral antes de cerrar la recomendación.';
+        renderTags([{ text: rt.toUpperCase(), kind: 'strong' }, { text: 'LKT pendiente', kind: 'warn' }]);
+        addList(actionList, ['Mide LKT y selecciona si es > 2 mm, ≤ 2 mm o dudoso.']);
+        addList(whyList, ['El artículo usa LKT como el siguiente filtro anatómico tras clasificar RT.']);
+        boundaryNote.textContent = 'Si LKT es exactamente 2 mm o dudoso, trátalo como una zona frontera y revisa el contexto anatómico.';
+        return;
+      }
+
+      if (rt === 'rt1' && lkt === 'large' && !value('papillaBase')) {
+        resultTitle.textContent = 'Falta base papilar';
+        resultSummary.textContent = 'En RT1 con LKT > 2 mm, la base de papila decide si la rama va hacia MCAF o MCAT.';
+        renderTags([{ text: 'RT1', kind: 'strong' }, 'LKT > 2 mm', { text: 'Base pendiente', kind: 'warn' }]);
+        addList(actionList, ['Selecciona si la base papilar es ≥ 3 mm o < 3 mm.']);
+        addList(whyList, ['La papila amplia aporta lecho receptor y soporte vascular para MCAF; la papila estrecha favorece MCAT.']);
+        boundaryNote.textContent = '';
+        return;
+      }
+
+      if (rt === 'rt2' && lkt === 'large' && !value('pcw')) {
+        resultTitle.textContent = 'Falta PCW';
+        resultSummary.textContent = 'En RT2 con LKT > 2 mm, PCW decide si se puede considerar MCAF+CTG o si conviene MCAT+CTG.';
+        renderTags([{ text: 'RT2', kind: 'strong' }, 'LKT > 2 mm', { text: 'PCW pendiente', kind: 'warn' }]);
+        addList(actionList, ['Selecciona si PCW es ≥ 2 mm o < 2 mm.']);
+        addList(whyList, ['PCW refleja la anchura coronal de la papila disponible para el manejo quirúrgico.']);
+        boundaryNote.textContent = '';
+        return;
+      }
+
+      if (rt === 'rt1' && !value('phenotype')) {
+        resultTitle.textContent = 'Falta fenotipo';
+        resultSummary.textContent = 'En RT1, después de elegir MCAF o MCAT, el fenotipo decide cuánto CTG hace falta.';
+        renderTags([{ text: 'RT1', kind: 'strong' }, { text: 'Fenotipo pendiente', kind: 'warn' }]);
+        addList(actionList, ['Selecciona la situación de KTW/GT.']);
+        addList(whyList, ['El artículo recomienda evitar CTG cuando no hace falta y usarlo de forma selectiva o completa cuando el fenotipo lo exige.']);
+        boundaryNote.textContent = '';
+        return;
+      }
+
+      if (nccl === 'yes') {
+        tags.push({ text: 'NCCL: restaurar antes', kind: 'warn' });
+        actions.push('Reconstruir/restaurar CEJ antes de la cirugía. Si CEJ no es visible, estimarla con diente contralateral o método de papila ideal.');
+        actions.push('En recesiones múltiples, considerar reconstruir CEJ 1 mm apical a la línea de cobertura radicular prevista.');
+        why.push('La restauración cervical prepara el límite anatómico y permite trabajar sobre una superficie restaurada estable.');
+      } else if (nccl === 'no') {
+        tags.push('Sin paso restaurador previo por NCCL');
+      } else {
+        tags.push({ text: 'NCCL no indicado', kind: 'warn' });
+        actions.push('Marca si hay NCCL/CEJ alterada para recordar si hace falta restauración previa.');
+      }
+
+      if (rt === 'rt3') {
+        title = 'Técnica de pared con CTG';
+        summary = 'RT3 implica pérdida interproximal extensa; la cobertura completa es muy difícil y el artículo propone un enfoque regenerativo, no una simple elección MCAT/MCAF.';
+        tags.push({ text: 'RT3', kind: 'warn' }, 'CTG bajo CAF', 'Regeneración');
+        actions.push('Planificar CTG bajo CAF como pared bucal/lingual de tejido blando para el defecto intraóseo.');
+        actions.push('Combinar con material regenerativo cuando el objetivo sea mejorar cobertura radicular y nivel de inserción clínica.');
+        why.push('En RT3 la pérdida interdental supera a la vestibular, reduciendo mucho la predictibilidad de CRC.');
+        why.push('El CTG actúa como soporte de tejido blando y la regeneración busca mejorar el componente óseo/inserción.');
+        note = 'Esta rama tiene menor evidencia y más dependencia del caso. El artículo menciona pocos reportes de corrección exitosa en RT3/Miller IV.';
+      } else if (rt === 'rt2') {
+        tags.push({ text: 'RT2', kind: 'strong' });
+        why.push('RT2 conserva parte del potencial de cobertura, pero la pérdida interdental hace que el soporte papilar sea un factor crítico.');
+        if (lkt === 'large') {
+          const pcw = value('pcw');
+          if (pcw === 'wide') {
+            title = 'MCAF+CTG';
+            summary = 'Con LKT suficiente y PCW ≥ 2 mm, MCAF+CTG puede considerarse porque la papila permite deepitelización y estabilización.';
+            tags.push('LKT > 2 mm', 'PCW ≥ 2 mm', { text: 'CTG indicado', kind: 'strong' });
+            actions.push('Usar MCAF+CTG; ajustar el injerto a los sitios que lo necesiten según KTW/GT, recordando que en RT2 el artículo considera el CTG necesario.');
+            why.push('PCW ≥ 2 mm permite extender la deepitelización hacia lingual/palatino y crear un lecho receptor más favorable.');
+          } else {
+            title = 'MCAT+CTG';
+            summary = 'Con PCW < 2 mm, el túnel con CTG preserva mejor la papila estrecha y evita exigirle una función mecánica que no puede cumplir bien.';
+            tags.push('LKT > 2 mm', 'PCW < 2 mm', { text: 'CTG indicado', kind: 'strong' });
+            actions.push('Usar MCAT+CTG.');
+            why.push('La papila coronal estrecha limita las incisiones/deepitelización de MCAF y puede comprometer vascularización y estabilidad.');
+          }
+        } else {
+          title = 'MCAT+CTG';
+          summary = 'Con LKT limitado, el artículo indica MCAT+CTG en RT2; el DCP ayuda a estimar la probabilidad de cobertura completa.';
+          tags.push({ text: 'LKT ≤ 2 mm', kind: 'warn' }, { text: 'CTG indicado', kind: 'strong' });
+          actions.push('Usar MCAT+CTG.');
+          why.push('Cuando LKT es limitado, elevar y movilizar papilas con MCAF es menos favorable que trabajar por túnel.');
+          if (lkt === 'borderline') {
+            tags.push({ text: 'Umbral frontera', kind: 'warn' });
+            why.push('El artículo usa <2, ≤2 y >2 en distintos pasajes/figuras; si la medición es exactamente 2 mm, conviene reevaluar la medición y el contexto anatómico.');
+          }
+        }
+        actions.push('Registrar DCP: el artículo lo usa como factor pronóstico de CRC en recesiones con pérdida interdental.');
+        note = 'En RT2 el CTG no es solo para engrosar: también sostiene el margen gingival y la posición posquirúrgica de la papila.';
+      } else {
+        tags.push({ text: 'RT1', kind: 'strong' });
+        if (lkt === 'large') {
+          const papilla = value('papillaBase');
+          const plan = phenotypePlan(papilla === 'large' ? 'MCAF' : 'MCAT');
+          title = plan.title;
+          summary = plan.text;
+          tags.push('LKT > 2 mm', papilla === 'large' ? 'Base papilar ≥ 3 mm' : 'Base papilar < 3 mm', ...plan.tags);
+          actions.push(`${plan.ctg}: ${plan.text}`);
+          if (papilla === 'large') {
+            why.push('Con LKT suficiente y papila amplia, MCAF ofrece buena estabilidad del colgajo y buen resultado estético.');
+            why.push('La papila amplia aporta lecho receptor y vascularización para estabilizar la papila quirúrgica desplazada.');
+          } else {
+            why.push('Con papila estrecha, MCAT evita incidir/deepitelizar una estructura pequeña y preserva la vascularización.');
+          }
+        } else {
+          const plan = phenotypePlan('MCAT');
+          title = plan.title;
+          summary = plan.text;
+          tags.push({ text: 'LKT ≤ 2 mm', kind: 'warn' }, ...plan.tags);
+          actions.push(`${plan.ctg}: ${plan.text}`);
+          why.push('Con LKT limitado, el artículo elige MCAT porque la disección tunelizada reduce el riesgo de desgarro/perforación al manejar papilas.');
+          if (lkt === 'borderline') {
+            tags.push({ text: 'Umbral frontera', kind: 'warn' });
+            why.push('Si la medición es exactamente 2 mm o dudosa, repetir medición y valorar el conjunto anatómico antes de cerrar la indicación.');
+          }
+        }
+        actions.push('Si se usa MCAT, estabilizar coronalmente con suturas suspendidas durante 10 a 14 días según la técnica descrita.');
+        actions.push('Si se usa MCAF, posicionar el colgajo aproximadamente 1 mm coronal a la CEJ tras tratar la superficie radicular.');
+        note = 'En RT1, la elección del CTG busca equilibrio: suficiente estabilidad a largo plazo sin generar morbilidad, exceso de queratinización o peor estética.';
+      }
+
+      resultTitle.textContent = title;
+      resultSummary.textContent = summary;
+      renderTags(tags);
+      addList(actionList, actions);
+      addList(whyList, why);
+      boundaryNote.textContent = note;
+    }
+
+    form.addEventListener('change', compute);
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      form.reset();
+      compute();
+    });
+    document.getElementById('printBtn').addEventListener('click', () => window.print());
+
+    const moreQuestionsBtn = document.getElementById('moreQuestionsBtn');
+    const moreQuestions = document.getElementById('moreQuestions');
+    moreQuestionsBtn.addEventListener('click', () => {
+      const isHidden = moreQuestions.classList.toggle('hidden');
+      moreQuestionsBtn.setAttribute('aria-expanded', String(!isHidden));
+      moreQuestionsBtn.textContent = isHidden ? 'Desglosar más preguntas' : 'Ocultar preguntas extra';
+    });
+
+    document.querySelectorAll('.mcq-card').forEach(card => {
+      const feedback = card.querySelector('.feedback');
+      card.querySelectorAll('.mcq-option').forEach(option => {
+        option.addEventListener('click', () => {
+          const isCorrect = option.dataset.correct === 'true';
+          card.querySelectorAll('.mcq-option').forEach(btn => {
+            btn.classList.remove('correct', 'incorrect');
+          });
+          option.classList.add(isCorrect ? 'correct' : 'incorrect');
+          feedback.textContent = `${isCorrect ? 'Correcto.' : 'Casi.'} ${card.dataset.learn}`;
+        });
+      });
+    });
+
+    const articleKnowledge = [
+      {
+        title: 'Objetivo del artículo',
+        keywords: ['objetivo', 'aim', 'proposito', 'propósito', 'para que', 'por que se hizo', 'decision tree', 'arbol', 'árbol', 'articulo', 'artículo'],
+        answer: 'El objetivo del artículo es proponer un árbol de decisión, basado en evidencia y experiencia clínica, para ayudar a elegir entre MCAT y MCAF en recesiones gingivales múltiples. Los autores parten de que ambas técnicas se usan mucho, pero la decisión es compleja porque intervienen factores anatómicos, biológicos y de pronóstico. El artículo no pretende decir que una técnica sea universalmente superior, sino ordenar qué factores deben mirarse primero.',
+        source: 'Abstract / Aim'
+      },
+      {
+        title: 'Mensaje central del artículo',
+        keywords: ['mensaje central', 'idea principal', 'resumen', 'explicame el articulo', 'explícame el artículo', 'de que trata', 'de qué trata', 'conclusion general'],
+        answer: 'La idea central es que, en recesiones gingivales múltiples, la elección quirúrgica no debe basarse solo en preferencia del operador. Primero se valora la pérdida de inserción interdental mediante RT1/RT2/RT3. Después se analizan LKT y dimensiones de papila. Finalmente, el fenotipo gingival determina si hace falta CTG y si debe usarse de forma selectiva o completa. El artículo también recalca que NCCL/CEJ deben manejarse antes de la cirugía, aunque no decidan por sí mismas MCAT o MCAF.',
+        source: 'Abstract / Decision-Making Process'
+      },
+      {
+        title: 'Contexto clínico de recesiones múltiples',
+        keywords: ['recesiones multiples', 'recesiones múltiples', 'varios dientes', 'single surgery', 'una sola cirugia', 'una sola cirugía', 'complejidad', 'paciente'],
+        answer: 'El artículo señala que las recesiones gingivales rara vez aparecen aisladas y con frecuencia afectan a varios dientes adyacentes. Para reducir procedimientos y molestias del paciente, suele ser deseable tratarlas en una sola cirugía. Esto aumenta la complejidad porque cada diente puede presentar anatomía distinta, áreas avasculares más amplias y posiciones dentarias diferentes.',
+        source: 'Introduction'
+      },
+      {
+        title: 'CAF+CTG como referencia',
+        keywords: ['caf', 'caf+ctg', 'gold standard', 'patron oro', 'patrón oro', 'recubrimiento radicular', 'crc', 'mrc', 'recred'],
+        answer: 'El artículo presenta CAF+CTG como la técnica más estudiada y con gran potencial para reducción de recesión, cobertura media y cobertura completa, especialmente en defectos unitarios. Pero aclara que, en recesiones múltiples, ese principio debe modularse porque la anatomía y la biología del conjunto son más complejas.',
+        source: 'Introduction'
+      },
+      {
+        title: 'Objetivo estético y clínico del recubrimiento radicular',
+        keywords: ['estetica', 'estética', 'objetivo clinico', 'objetivo clínico', 'sondaje', 'color', 'textura', 'blend', 'resultado estetico'],
+        answer: 'El artículo indica que la estética suele ser la principal indicación de las técnicas de recubrimiento radicular. El objetivo no es solo cubrir la raíz: también se busca mínima profundidad de sondaje y que el color y la textura del tejido tratado se integren con los tejidos adyacentes.',
+        source: 'Introduction'
+      },
+      {
+        title: 'Clasificación EFP/AAP y variables que registra',
+        keywords: ['efp/aap', 'world workshop', 'clasificacion nueva', 'clasificación nueva', 'rd', 'ktw', 'gt', 'fenotipo', 'grid', 'pini-prato'],
+        answer: 'El artículo explica que la clasificación EFP/AAP integra la clasificación RT de Cairo y la evaluación de CEJ/NCCL de Pini-Prato. También incorpora variables bucales como profundidad de recesión, anchura de tejido queratinizado y grosor gingival. Con ello se busca registrar, diente por diente, si es necesario modificar el fenotipo o corregir la superficie radicular/coronal.',
+        source: 'EFP/AAP classification'
+      },
+      {
+        title: 'Elementos clínicos que pueden influir en la planificación',
+        keywords: ['elementos criticos', 'elementos críticos', 'evaluacion inicial', 'evaluación inicial', 'factores a considerar', 'caries radicular', 'abrasion', 'abrasión', 'vestibulo', 'vestíbulo'],
+        answer: 'El artículo enumera múltiples elementos que pueden influir en una planificación de recubrimiento radicular: número y tamaño de recesiones, altura y anchura de tejido interdental, dimensiones de papilas, altura/grosor/color del tejido queratinizado apical y lateral, caries radicular o abrasiones cervicales, profundidad vestibular y presencia de frenillos o inserciones musculares. Después, en el árbol, los autores jerarquizan cuáles usan como determinantes principales para elegir MCAT/MCAF.',
+        source: 'Introduction / Relevant Factors'
+      },
+      {
+        title: 'Evidencia sobre papila y pronóstico',
+        keywords: ['altura papila', 'anchura papila', 'papilla height', 'papilla width', '5 mm', 'haghigati', 'saletta', 'consenso papila'],
+        answer: 'El artículo revisa que algunas publicaciones relacionan la altura y anchura papilar con la posibilidad de cobertura radicular, especialmente cuando existe pérdida de inserción interproximal. Se citan datos donde una papila ≥ 5 mm se asoció con cobertura radicular en el 100% de casos y otros trabajos relacionan papila estrecha con limitaciones de incisiones y aporte sanguíneo. Pero los autores también aclaran que no existe consenso clínico absoluto porque hay resultados contradictorios y metodologías distintas.',
+        source: 'Recession Class / Papilla evidence'
+      },
+      {
+        title: 'Evidencia sobre KT y estabilidad',
+        keywords: ['kt basal', '0.23', '8 años', '8 anos', 'kt apical', 'estabilidad marginal', 'recred', 'pini-prato'],
+        answer: 'El artículo indica que mayor cantidad de tejido queratinizado basal se ha relacionado con mejor cobertura y reducción de recesión. Cita datos de Pini-Prato en los que cada milímetro adicional de KT basal se asoció con 0,23 mm más de reducción de recesión a 8 años. También señala que el KT apical a la exposición radicular es importante para la estabilidad del colgajo avanzado coronalmente.',
+        source: 'Gingival Phenotype'
+      },
+      {
+        title: 'Evidencia sobre GT y grosor de colgajo',
+        keywords: ['gt', 'grosor gingival', 'flap thickness', '0.8', '1 mm', 'baldi', 'colgajo grueso', 'colgajo fino'],
+        answer: 'El artículo considera el grosor gingival clave para la estabilidad tras desplazar el margen coronalmente. En tejido grueso, la matriz conectiva soporta mejor la inflamación inicial; en tejido fino, puede haber más contracción y recesión. Se cita que, en CAF unitario, un grosor de colgajo > 0,8 mm se asoció con 100% de cobertura radicular, y se relaciona el límite de 1 mm con la separación entre fenotipo fino y grueso.',
+        source: 'Gingival Phenotype'
+      },
+      {
+        title: 'MCAF frente a MCAF+CTG',
+        keywords: ['mcaf sola', 'mcaf+ctg', '5 años', '5 anos', 'zucchelli', 'cairo', 'estabilidad a largo plazo', '0.8 mm', 'keloid', 'queloide'],
+        answer: 'El artículo resume estudios donde MCAF y MCAF+CTG fueron similares a corto plazo, pero a 5 años MCAF+CTG mostró mayor estabilidad en algunos resultados. En el estudio de Cairo, MCAF+CTG fue superior en sitios con encía fina, mientras que no hubo diferencia en encía gruesa. MCAF sola obtuvo mejores puntuaciones estéticas en sitios gruesos; CTG aumentó KT y morbilidad, y se describen problemas estéticos como exceso de queratinización o exposición del injerto en algunos casos.',
+        source: 'Gingival Phenotype / MCAF evidence'
+      },
+      {
+        title: 'CTG selectivo en MCAF y MCAT',
+        keywords: ['ctg selectivo', 'site-specific', 'sitio especifico', 'sitio-específico', 'stefanini', 'aroca 2021', 'paladar', 'zona donante'],
+        answer: 'El artículo destaca el uso selectivo de CTG cuando solo algunos sitios presentan fenotipo fino. En MCAF, Stefanini et al mostraron que usar CTG solo donde el grosor basal lo requería podía lograr cobertura comparable entre sitios con y sin injerto. En MCAT, Aroca et al describieron también aplicación sitio-específica de CTG. La lógica es reducir tejido tomado del paladar, disminuir morbilidad y mantener mejor estética.',
+        source: 'Gingival Phenotype / Selective CTG'
+      },
+      {
+        title: 'NCCL y restauración previa',
+        keywords: ['nccL restauracion', 'restauraciones cervicales', 'ionomero', 'ionómero', 'resina compuesta', 'composite', 'inflamacion', 'inflamación', 'bolsas'],
+        answer: 'El artículo explica que, cuando hay NCCL o CEJ alterada, la restauración debe planificarse antes de la cirugía. Cita literatura donde restauraciones cervicales con ionómero de vidrio modificado o resina compuesta, bien realizadas, no afectaron negativamente la estabilidad ni el estado inflamatorio marginal. En recesiones múltiples se menciona reconstruir la CEJ 1 mm apical a la línea de cobertura prevista, con buena compatibilidad a 1 año en el estudio citado.',
+        source: 'NCCLs'
+      },
+      {
+        title: 'Consensos y elección de técnicas',
+        keywords: ['workshop', 'consenso', '10th european workshop', 'aap regeneration', 'sin incisiones verticales', 'vertical releasing', 'sustitutos', 'gold standard'],
+        answer: 'El artículo recoge que talleres y revisiones sugieren que el uso de injertos, modificaciones del colgajo o variaciones de túnel con CTG pueden mejorar resultados. También se menciona la preferencia por técnicas sin incisiones verticales para intentar cobertura completa en múltiples recesiones. Por ello, el artículo se centra en MCAF y MCAT, con o sin CTG, y no desarrolla sustitutos de tejido conectivo.',
+        source: 'Surgical Techniques'
+      },
+      {
+        title: 'Detalles técnicos de MCAF',
+        keywords: ['tecnica mcaf', 'técnica mcaf', 'split-full-split', 'papilas quirurgicas', 'papilas quirúrgicas', 'incisiones oblicuas', '1 mm coronal'],
+        answer: 'El artículo describe MCAF como un colgajo en sobre para múltiples recesiones. Incluye incisiones submarginales oblicuas en áreas interdentales, desplazamiento de papilas quirúrgicas respecto a las anatómicas, elevación split-full-split, deepitelización de papilas anatómicas, tratamiento de superficies radiculares y posicionamiento del colgajo 1 mm coronal a la CEJ. Se resalta la importancia de incluir parcialmente periostio para estabilidad marginal.',
+        source: 'MCAF technique'
+      },
+      {
+        title: 'Detalles técnicos de MCAT',
+        keywords: ['tecnica mcat', 'técnica mcat', 'microelevador', 'gracey', 'sutura suspendida', '10 a 14 dias', '10 14 días', 'tunelizado', 'colageno'],
+        answer: 'El artículo describe MCAT como una preparación tunelizada iniciada desde el surco con microelevadores, extendida más allá de la línea mucogingival y bajo las papilas. La liberación de tensión se consigue seccionando haces de colágeno en la cara interna del colgajo. Si se usa CTG, se introduce por la recesión más amplia y se estabiliza con suturas. La estabilización coronal se mantiene con suturas suspendidas alrededor de los puntos de contacto durante 10 a 14 días.',
+        source: 'MCAT technique'
+      },
+      {
+        title: 'MCAT sin CTG en fenotipos gruesos',
+        keywords: ['mcat sin ctg', 'rasperini', 'thick phenotype', 'very thick', 'fenotipo muy grueso', 'sin injerto'],
+        answer: 'El artículo menciona una serie clínica en la que MCAT sin CTG se evaluó en pacientes con fenotipos gruesos o muy gruesos (> 1,5 mm). En esos casos se observaron reducciones significativas de recesión y mejora estética con menor incomodidad intra y posoperatoria. Esta indicación se limita a fenotipos favorables, no a todos los casos.',
+        source: 'Gingival Phenotype / MCAT evidence'
+      },
+      {
+        title: 'Casos clínicos y figuras',
+        keywords: ['figura 3', 'figura 4', 'figura 5', 'figura 6', 'caso 1', 'caso 2', 'caso 3', 'clinical outcomes', 'resultados a 1 año'],
+        answer: 'Las figuras clínicas ilustran las ramas del árbol: RT1 con LKT > 2 mm y base papilar ≥ 3 mm tratado con MCAF y CTG sitio-específico; RT1 con LKT > 2 mm pero base papilar < 3 mm tratado con MCAT y CTG sitio-específico; RT2 con LKT > 2 mm y PCW ≥ 2 mm tratado con MCAF+CTG sitio-específico; y RT2 con LKT ≤ 2 mm tratado con MCAT+CTG. Los casos muestran resultados clínicos a 1 año.',
+        source: 'Clinical Cases / Figures 3-6'
+      },
+      {
+        title: 'Autores y datos del artículo',
+        keywords: ['autores', 'autor', 'quien escribio', 'quién escribió', 'aroca', 'zucchelli', 'di domenico', 'de sanctis', 'conflicto', 'conflictos'],
+        answer: 'El artículo está firmado por Sofia Aroca, Giovanni Zucchelli, Giovanna Laura Di Domenico y Massimo de Sanctis. Fue publicado en 2025 en The International Journal of Periodontics & Restorative Dentistry. Los autores declaran no tener conflictos de interés.',
+        source: 'Title page / Acknowledgments'
+      },
+      {
+        title: 'NCCL y CEJ',
+        keywords: ['nccl', 'cej', 'lesion cervical', 'lesiones cervicales', 'cervical', 'restaurar', 'restauracion', 'reconstruir', 'composite'],
+        answer: 'Las lesiones cervicales no cariosas pueden borrar la CEJ o crear escalones/concavidades. El artículo indica que deben tratarse antes de la cirugía mucogingival. Si la CEJ no se identifica, se puede estimar con el diente contralateral intacto o con el método de la papila ideal. En recesiones múltiples se menciona reconstruir la CEJ 1 mm apical a la línea prevista de cobertura radicular. Importante: las NCCL no deciden por sí mismas la técnica quirúrgica.',
+        source: 'NCCL / CEJ'
+      },
+      {
+        title: 'RT1, RT2 y RT3',
+        keywords: ['rt1', 'rt2', 'rt3', 'clasificacion', 'clasificación', 'cairo', 'efp', 'aap', 'interdental', 'insercion', 'inserción'],
+        answer: 'El primer paso del artículo es clasificar el tipo de recesión. RT1 significa recesión sin pérdida de inserción interdental. RT2 significa pérdida interdental menor que la pérdida vestibular. RT3 significa pérdida interdental mayor que la vestibular. RT2 y RT3 tienen peor pronóstico para cobertura completa que RT1.',
+        source: 'Recession Class'
+      },
+      {
+        title: 'LKT',
+        keywords: ['lkt', 'tejido queratinizado lateral', 'queratinizado lateral', '2 mm', 'lateral', 'frenillo', 'mucogingival'],
+        answer: 'LKT es el tejido queratinizado lateral al defecto de recesión. Se mide como la altura de tejido queratinizado entre la papila y la línea mucogingival, invaginación mucosa o frenillo. Si LKT es amplio, MCAF se vuelve más factible porque es más fácil elevar y movilizar papilas. Si LKT es limitado, el artículo favorece MCAT.',
+        source: 'Decision-Making Process / LKT'
+      },
+      {
+        title: 'MCAF',
+        keywords: ['mcaf', 'colgajo', 'coronally advanced flap', 'múltiple', 'multiple', 'papila amplia', 'base papilar'],
+        answer: 'MCAF es el colgajo avanzado coronal múltiple. En el árbol, se favorece en RT1 cuando LKT es > 2 mm y la base papilar es ≥ 3 mm. En RT2, MCAF+CTG puede considerarse si LKT es > 2 mm y PCW es ≥ 2 mm. La lógica es que MCAF necesita papilas suficientemente amplias para estabilizar el colgajo y mantener vascularización.',
+        source: 'MCAF / Clinical Cases'
+      },
+      {
+        title: 'MCAT',
+        keywords: ['mcat', 'tunel', 'túnel', 'tunnel', 'papila estrecha', 'base menor', 'lkt limitado'],
+        answer: 'MCAT es el túnel avanzado coronal modificado. En RT1 se favorece cuando la base papilar es < 3 mm o cuando LKT es limitado. En RT2 se indica MCAT+CTG cuando LKT es limitado o cuando PCW es < 2 mm. Su ventaja es preservar mejor la papila y su vascularización, especialmente cuando la papila es estrecha.',
+        source: 'MCAT / Clinical Cases'
+      },
+      {
+        title: 'Papila y PCW',
+        keywords: ['papila', 'base', 'pcw', 'anchura coronal', '3 mm', '2 mm', 'coronal width'],
+        answer: 'En RT1 con LKT > 2 mm se evalúa la base de papila: si es ≥ 3 mm, el árbol favorece MCAF; si es < 3 mm, favorece MCAT. En RT2 con LKT > 2 mm se evalúa PCW, medida a 2 mm de la punta de la papila: si PCW es ≥ 2 mm, puede considerarse MCAF+CTG; si es < 2 mm, se indica MCAT+CTG.',
+        source: 'Papilla Dimensions / Clinical Cases'
+      },
+      {
+        title: 'Racional de medir la base de la papila',
+        keywords: ['por que base papila', 'por qué base papila', 'importante medir base papila', 'medir base de la papila', 'base de la papila', 'base papilar', 'racional papila', 'mecanica papila', 'mecánica papila', 'vascularizacion papila', 'vascularización papila', 'lecho receptor', 'necrosis', 'shrinkage', 'contraccion', 'contracción'],
+        answer: 'Medir la base de la papila es importante porque, en RT1 con LKT > 2 mm, esa medida decide si la anatomía permite MCAF o si conviene MCAT. Si la base es ≥ 3 mm, la papila ofrece más tejido conectivo interproximal para estabilizar la papila quirúrgica y el colgajo desplazado coronalmente. Además, una papila amplia proporciona un lecho receptor mayor y mejores intercambios vasculares durante la cicatrización. Si la papila es estrecha, una disección a espesor parcial puede comprometer su eje vascular y aumentar el riesgo de necrosis, contracción o colapso marginal. Por eso, con base < 3 mm, el artículo favorece MCAT: el túnel preserva mejor la vascularización porque no diseca la papila del mismo modo.',
+        source: 'Rationale / Papilla Dimensions'
+      },
+      {
+        title: 'Fenotipo, KTW, GT y CTG',
+        keywords: ['fenotipo', 'ktw', 'gt', 'grosor', 'gingival thickness', 'tejido fino', 'ctg', 'injerto', 'conectivo', 'selectivo'],
+        answer: 'El fenotipo combina anchura de tejido queratinizado y grosor gingival. El tejido fino se define como GT ≤ 1 mm; grueso si GT > 1 mm. Si KTW es > 2 mm en todos los sitios y el fenotipo es suficiente, se puede evitar CTG. Si hay sitios aislados con 1 < KTW ≤ 2 mm y alguno es fino, se usa CTG selectivo. Si KTW ≤ 1 mm de forma homogénea, se indica técnica bilaminar con CTG en todos los sitios.',
+        source: 'Gingival Phenotype / Case 1'
+      },
+      {
+        title: 'CTG en RT2',
+        keywords: ['rt2', 'ctg', 'papila', 'margen', 'soporte', 'interdental'],
+        answer: 'En RT2, el artículo considera el CTG necesario en las ramas propuestas. No solo modifica el fenotipo: también ayuda a sostener el margen gingival y la posición posquirúrgica de la papila cuando hay pérdida interdental.',
+        source: 'Case 2: RT2'
+      },
+      {
+        title: 'RT3 y técnica de pared',
+        keywords: ['rt3', 'pared', 'wall', 'regeneracion', 'regeneración', 'intraoseo', 'intraóseo', 'miller iv'],
+        answer: 'En RT3 hay pérdida interproximal extensa y la cobertura completa es muy difícil. El artículo menciona pocos casos exitosos y destaca un enfoque con CTG bajo CAF como pared bucal/lingual de tejido blando para el defecto intraóseo, combinado con material regenerativo para intentar mejorar cobertura radicular y nivel de inserción clínica.',
+        source: 'Case 3: RT3'
+      },
+      {
+        title: 'DCP y pronóstico',
+        keywords: ['dcp', 'pronostico', 'pronóstico', 'punto de contacto', 'papilla tip', 'maxilar', 'mandibula', 'mandíbula', 'probabilidad'],
+        answer: 'DCP es la distancia desde la punta de la papila hasta el punto de contacto interdental. En estudios citados sobre MCAT para recesiones clase III, DCP ayudó a anticipar cobertura completa. Con DCP basal de 3 mm, la probabilidad de cobertura completa fue 0,89 en maxilar y 0,34 en mandíbula. Para cobertura ≥ 75%, las probabilidades citadas fueron mayores en maxilar que en mandíbula.',
+        source: 'Recession Class / DCP evidence'
+      },
+      {
+        title: 'ICAL',
+        keywords: ['ical', '3 mm', '80', 'rt2', 'cairo', 'attachment level', 'inserción interproximal'],
+        answer: 'El artículo cita un estudio en defectos RT2 tratados con CAF+CTG donde ICAL fue un predictor importante. Cuando ICAL era < 3 mm al inicio, la probabilidad de obtener cobertura radicular completa fue > 80%.',
+        source: 'Recession Class'
+      },
+      {
+        title: 'Morbilidad y estética del CTG',
+        keywords: ['morbidad', 'morbilidad', 'estetica', 'estética', 'keloide', 'ctg', 'paciente', 'dolor', 'donante'],
+        answer: 'El artículo recomienda evitar CTG cuando sea posible, porque aunque aumenta estabilidad, grosor y tejido queratinizado, también puede aumentar morbilidad y afectar la estética. Se mencionan casos de exceso de queratinización, exposición del injerto o formación tipo queloide en zonas con CTG. Por eso se favorece el uso selectivo cuando el fenotipo lo exige.',
+        source: 'Gingival Phenotype'
+      },
+      {
+        title: 'Factores no determinantes principales',
+        keywords: ['no determinan', 'no decide', 'factores', 'frenillo', 'vestibular', 'numero', 'número', 'defectos', 'posicion dental', 'profundidad'],
+        answer: 'El artículo dice que dimensiones de la recesión, localización maxilar o mandibular, número de defectos, frenillos o tracción muscular, profundidad vestibular y posición dental no se consideran determinantes para elegir MCAF o MCAT en este árbol. Aun así, siguen siendo relevantes para la ejecución quirúrgica y el pronóstico.',
+        source: 'Rationale / NCCLs'
+      },
+      {
+        title: 'Evidencia comparativa MCAF vs MCAT',
+        keywords: ['evidencia', 'comparacion', 'comparación', 'superioridad', 'metaanalisis', 'meta', 'revision', 'revisión'],
+        answer: 'El artículo señala que hay evidencia limitada comparando directamente MCAF y MCAT. Las comparaciones disponibles no demuestran con claridad la superioridad de una técnica sobre la otra ni dan guías suficientes por sí solas. Por eso los autores proponen un árbol basado en factores anatómicos y experiencia clínica.',
+        source: 'Surgical Techniques'
+      }
+    ];
+
+    function normalizeText(text) {
+      return text.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[^\w\s<>/=]/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+    }
+
+    function answerFromArticle(question) {
+      const normalized = normalizeText(question);
+      if (!normalized) {
+        return {
+          answer: 'Escribe una pregunta sobre el artículo. Por ejemplo: “¿Cuándo se usa MCAT?” o “¿Qué papel tiene DCP?”.',
+          source: 'Ayuda'
+        };
+      }
+
+      const reasoningIntent = /\b(por que|porque|importante|razon|razones|racional|explica|explicame|mecanica|mecanico|biologico|biologica|vascular|estabiliza|estabilizacion)\b/.test(normalized);
+      const decisionIntent = /\b(cuando|elegir|elige|indica|indicacion|tecnica|mcaf|mcat|ctg|arbol|decision)\b/.test(normalized);
+
+      const scored = articleKnowledge.map((item, index) => {
+        let score = item.keywords.reduce((sum, keyword) => {
+          const key = normalizeText(keyword);
+          if (!key) return sum;
+          if (!normalized.includes(key)) return sum;
+          const wordCount = key.split(' ').length;
+          return sum + Math.max(1, wordCount);
+        }, 0);
+        const title = normalizeText(item.title);
+        if (reasoningIntent && /\b(racional|importante|evidencia|tecnica|detalles|fenotipo|papila)\b/.test(title)) {
+          score += 2;
+        }
+        if (decisionIntent && /\b(clinical cases|decision|mcaf|mcat|papila|ctg|rt1|rt2|rt3|lkt)\b/.test(normalizeText(item.source))) {
+          score += 1;
+        }
+        return { ...item, score, index };
+      }).sort((a, b) => b.score - a.score || a.index - b.index);
+
+      const best = scored[0];
+      if (!best || best.score === 0) {
+        return {
+          answer: 'No puedo responder eso usando solo el artículo proporcionado. Prueba a preguntar por RT1/RT2/RT3, NCCL, LKT, papila, PCW, CTG, MCAF, MCAT, DCP, ICAL o factores pronósticos descritos en el texto.',
+          source: 'Fuera de la fuente'
+        };
+      }
+
+      const selected = scored
+        .filter(item => item.score > 0 && item.score >= Math.max(1, best.score - 2))
+        .slice(0, reasoningIntent ? 4 : 3);
+      const answer = selected.map((item, idx) => {
+        if (selected.length === 1) return item.answer;
+        return `${idx + 1}. ${item.answer}`;
+      }).join('\n\n');
+      const source = selected.map(item => item.source).join(' + ');
+      return { answer, source };
+    }
+
+    function addChatMessage(role, text, source) {
+      const chatWindow = document.getElementById('chatWindow');
+      const message = document.createElement('div');
+      message.className = `message ${role}`;
+      const label = document.createElement('strong');
+      label.textContent = role === 'user' ? 'Tú' : 'Artículo';
+      const body = document.createElement('div');
+      body.textContent = text;
+      message.append(label, body);
+      if (source) {
+        const chip = document.createElement('span');
+        chip.className = 'source-chip';
+        chip.textContent = source;
+        message.appendChild(chip);
+      }
+      chatWindow.appendChild(message);
+      chatWindow.scrollTop = chatWindow.scrollHeight;
+    }
+
+    document.getElementById('articleChatForm').addEventListener('submit', event => {
+      event.preventDefault();
+      const input = document.getElementById('articleQuestion');
+      const question = input.value.trim();
+      if (!question) return;
+      addChatMessage('user', question);
+      const response = answerFromArticle(question);
+      addChatMessage('article', response.answer, response.source);
+      input.value = '';
+    });
+
+    document.querySelectorAll('.ask-suggestion').forEach(button => {
+      button.addEventListener('click', () => {
+        const input = document.getElementById('articleQuestion');
+        input.value = button.textContent;
+        input.focus();
+      });
+    });
+
+    const treeDetail = document.getElementById('treeDetail');
+    document.querySelectorAll('.tree-node').forEach(node => {
+      node.addEventListener('click', () => {
+        document.querySelectorAll('.tree-node').forEach(item => item.classList.remove('active'));
+        node.classList.add('active');
+        const title = node.querySelector('strong')?.textContent || 'Rama';
+        const info = node.dataset.treeInfo || '';
+        treeDetail.innerHTML = `<h4>${title}</h4><p>${info}</p>`;
+      });
+    });
+
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.view).classList.add('active');
+      });
+    });
+
+    form.querySelectorAll('input[type="radio"]').forEach(input => {
+      input.checked = false;
+    });
+    compute();
+  </script>
+</body>
+</html>
